@@ -108,21 +108,19 @@ def delete_user(user_id):
 
 @app.route('/people', methods=['GET'])
 def get_all_people():
-    all_people = People.query.all()  # Consulta todos los registros de la tabla People
-    all_people_serialize = [person.serialize() for person in all_people]  # Serializa los datos
+    all_people = People.query.all()  
+    all_people_serialize = [person.serialize() for person in all_people]  
     
     return jsonify(all_people_serialize), 200
 
 
 @app.route('/people/<int:person_id>', methods=['GET'])
 def get_person(person_id):
-    person = People.query.get(person_id)  # Busca una persona por ID en la base de datos
+    person = People.query.get(person_id)  
     if person is None:
-        return jsonify({'msg': 'Person not found'}), 404  # Si no se encuentra, devuelve un error 404
+        return jsonify({'msg': 'Person not found'}), 404  
+    return jsonify(person.serialize()), 200  
 
-    return jsonify(person.serialize()), 200  # Si se encuentra, devuelve la información de la persona en formato JSON con el código de estado 200
-
-# [POST] Crear un nuevo registro de People
 @app.route('/people', methods=['POST'])
 def create_people():
     body = request.get_json()
@@ -130,13 +128,11 @@ def create_people():
     if not body:
         return jsonify({'msg': 'Missing request body'}), 400
 
-    # Validar que los campos requeridos estén presentes
     required_fields = ['name', 'birth_year', 'gender', 'height', 'hair_color']
     for field in required_fields:
         if field not in body:
             return jsonify({'msg': f'Missing {field}'}), 400
 
-    # Crear un nuevo registro de People
     new_people = People(
         name=body['name'],
         birth_year=body['birth_year'],
@@ -146,7 +142,6 @@ def create_people():
     )
 
     try:
-        # Guardar en la base de datos
         db.session.add(new_people)
         db.session.commit()
         return jsonify(new_people.serialize()), 201  # Devuelve el objeto creado con código 201
@@ -155,17 +150,14 @@ def create_people():
     
 @app.route('/people/<int:person_id>', methods=['PUT'])
 def update_person(person_id):
-    # Buscar la persona por ID en la base de datos
     person = People.query.get(person_id)
     if person is None:
         return jsonify({'msg': 'Person not found'}), 404
 
-    # Obtener los datos del cuerpo de la solicitud
     body = request.get_json()
     if not body:
         return jsonify({"msg": "Body is required"}), 400
 
-    # Actualizar los campos permitidos si están presentes en el cuerpo de la solicitud
     if "name" in body:
         person.name = body["name"]
     if "birth_year" in body:
@@ -177,55 +169,50 @@ def update_person(person_id):
     if "hair_color" in body:
         person.hair_color = body["hair_color"]
 
-    # Guardar los cambios en la base de datos
     db.session.commit()
 
-    # Devolver la respuesta con los datos actualizados
     return jsonify(person.serialize()), 200
 
 @app.route('/people/<int:person_id>', methods=['DELETE'])
 def delete_person(person_id):
-    # Buscar la persona por ID en la base de datos
     person = People.query.get(person_id)
     if person is None:
         return jsonify({'msg': 'Person not found'}), 404
 
-    # Eliminar la persona de la base de datos
     db.session.delete(person)
     db.session.commit()
 
-    # Devolver una respuesta confirmando la eliminación
     return jsonify({"msg": "Person deleted successfully"}), 200
 
 @app.route('/planets', methods=['GET'])
 def get_all_planets():
-    all_planets = Planet.query.all()  # Consulta todos los registros de la tabla Planet
-    all_planets_serialize = [planet.serialize() for planet in all_planets]  # Serializa los datos
+    all_planets = Planet.query.all()  
+    all_planets_serialize = [planet.serialize() for planet in all_planets]  
     
     return jsonify(all_planets_serialize), 200
 
 
 @app.route('/planets/<int:planet_id>', methods=['GET'])
 def get_planet(planet_id):
-    planet = Planet.query.get(planet_id)  # Busca un planeta por ID en la base de datos
+    planet = Planet.query.get(planet_id)  
     if planet is None:
-        return jsonify({'msg': 'Planet not found'}), 404  # Si no se encuentra, devuelve un error 404
+        return jsonify({'msg': 'Planet not found'}), 404  
 
-    return jsonify(planet.serialize()), 200  # Devuelve la información del planeta en formato JSON con código 200
+    return jsonify(planet.serialize()), 200  
 
 @app.route('/planets', methods=['POST'])
 def create_planet():
-    body = request.get_json()  # Obtener los datos del cuerpo de la solicitud
+    body = request.get_json()  
     if not body:
-        return jsonify({"msg": "Body is required"}), 400  # Verifica si el cuerpo de la solicitud está vacío
+        return jsonify({"msg": "Body is required"}), 400  
 
-    # Validar que los campos requeridos estén presentes
+    
     required_fields = ['name', 'climate', 'terrain', 'population']
     for field in required_fields:
         if field not in body:
             return jsonify({'msg': f'Missing {field}'}), 400
 
-    # Crear un nuevo registro de Planet
+    
     new_planet = Planet(
         name=body['name'],
         climate=body['climate'],
@@ -233,23 +220,23 @@ def create_planet():
         population=body['population']
     )
 
-    # Guardar en la base de datos
+    
     db.session.add(new_planet)
     db.session.commit()
 
-    return jsonify(new_planet.serialize()), 201  # Devuelve el objeto creado con código 201
+    return jsonify(new_planet.serialize()), 201 
 
 @app.route('/planets/<int:planet_id>', methods=['PUT'])
 def update_planet(planet_id):
-    planet = Planet.query.get(planet_id)  # Busca un planeta por ID en la base de datos
+    planet = Planet.query.get(planet_id)  
     if planet is None:
         return jsonify({'msg': 'Planet not found'}), 404
 
-    body = request.get_json()  # Obtener los datos del cuerpo de la solicitud
+    body = request.get_json()  
     if not body:
         return jsonify({"msg": "Body is required"}), 400
 
-    # Actualizar los campos permitidos si están presentes en el cuerpo de la solicitud
+   
     if "name" in body:
         planet.name = body["name"]
     if "climate" in body:
@@ -259,17 +246,17 @@ def update_planet(planet_id):
     if "population" in body:
         planet.population = body["population"]
 
-    db.session.commit()  # Guardar los cambios en la base de datos
+    db.session.commit()  
 
     return jsonify(planet.serialize()), 200
 
 @app.route('/planets/<int:planet_id>', methods=['DELETE'])
 def delete_planet(planet_id):
-    planet = Planet.query.get(planet_id)  # Busca un planeta por ID en la base de datos
+    planet = Planet.query.get(planet_id)  
     if planet is None:
         return jsonify({'msg': 'Planet not found'}), 404
 
-    db.session.delete(planet)  # Eliminar el planeta de la base de datos
+    db.session.delete(planet)  
     db.session.commit()
 
     return jsonify({"msg": "Planet deleted successfully"}), 200
