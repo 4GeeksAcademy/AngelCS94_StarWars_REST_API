@@ -105,6 +105,99 @@ def delete_user(user_id):
 
     return jsonify({"msg": "User deleted successfully"}), 200
 
+
+@app.route('/people', methods=['GET'])
+def get_all_people():
+    all_people = People.query.all()  # Consulta todos los registros de la tabla People
+    all_people_serialize = [person.serialize() for person in all_people]  # Serializa los datos
+    
+    return jsonify(all_people_serialize), 200
+
+
+@app.route('/people/<int:person_id>', methods=['GET'])
+def get_person(person_id):
+    person = People.query.get(person_id)  # Busca una persona por ID en la base de datos
+    if person is None:
+        return jsonify({'msg': 'Person not found'}), 404  # Si no se encuentra, devuelve un error 404
+
+    return jsonify(person.serialize()), 200  # Si se encuentra, devuelve la información de la persona en formato JSON con el código de estado 200
+
+# [POST] Crear un nuevo registro de People
+@app.route('/people', methods=['POST'])
+def create_people():
+    body = request.get_json()
+
+    if not body:
+        return jsonify({'msg': 'Missing request body'}), 400
+
+    # Validar que los campos requeridos estén presentes
+    required_fields = ['name', 'birth_year', 'gender', 'height', 'hair_color']
+    for field in required_fields:
+        if field not in body:
+            return jsonify({'msg': f'Missing {field}'}), 400
+
+    # Crear un nuevo registro de People
+    new_people = People(
+        name=body['name'],
+        birth_year=body['birth_year'],
+        gender=body['gender'],
+        height=body['height'],
+        hair_color=body['hair_color']
+    )
+
+    try:
+        # Guardar en la base de datos
+        db.session.add(new_people)
+        db.session.commit()
+        return jsonify(new_people.serialize()), 201  # Devuelve el objeto creado con código 201
+    except Exception as e:
+        return jsonify({'msg': 'Error creating People', 'error': str(e)}), 500
+    
+@app.route('/people/<int:person_id>', methods=['PUT'])
+def update_person(person_id):
+    # Buscar la persona por ID en la base de datos
+    person = People.query.get(person_id)
+    if person is None:
+        return jsonify({'msg': 'Person not found'}), 404
+
+    # Obtener los datos del cuerpo de la solicitud
+    body = request.get_json()
+    if not body:
+        return jsonify({"msg": "Body is required"}), 400
+
+    # Actualizar los campos permitidos si están presentes en el cuerpo de la solicitud
+    if "name" in body:
+        person.name = body["name"]
+    if "birth_year" in body:
+        person.birth_year = body["birth_year"]
+    if "gender" in body:
+        person.gender = body["gender"]
+    if "height" in body:
+        person.height = body["height"]
+    if "hair_color" in body:
+        person.hair_color = body["hair_color"]
+
+    # Guardar los cambios en la base de datos
+    db.session.commit()
+
+    # Devolver la respuesta con los datos actualizados
+    return jsonify(person.serialize()), 200
+
+@app.route('/people/<int:person_id>', methods=['DELETE'])
+def delete_person(person_id):
+    # Buscar la persona por ID en la base de datos
+    person = People.query.get(person_id)
+    if person is None:
+        return jsonify({'msg': 'Person not found'}), 404
+
+    # Eliminar la persona de la base de datos
+    db.session.delete(person)
+    db.session.commit()
+
+    # Devolver una respuesta confirmando la eliminación
+    return jsonify({"msg": "Person deleted successfully"}), 200
+
+
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3000))
