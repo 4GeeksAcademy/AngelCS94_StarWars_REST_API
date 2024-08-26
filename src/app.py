@@ -6,7 +6,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User, People
+from models import db, User, People, Planet
 #from models import Person
 
 app = Flask(__name__)
@@ -197,6 +197,82 @@ def delete_person(person_id):
     # Devolver una respuesta confirmando la eliminación
     return jsonify({"msg": "Person deleted successfully"}), 200
 
+@app.route('/planets', methods=['GET'])
+def get_all_planets():
+    all_planets = Planet.query.all()  # Consulta todos los registros de la tabla Planet
+    all_planets_serialize = [planet.serialize() for planet in all_planets]  # Serializa los datos
+    
+    return jsonify(all_planets_serialize), 200
+
+
+@app.route('/planets/<int:planet_id>', methods=['GET'])
+def get_planet(planet_id):
+    planet = Planet.query.get(planet_id)  # Busca un planeta por ID en la base de datos
+    if planet is None:
+        return jsonify({'msg': 'Planet not found'}), 404  # Si no se encuentra, devuelve un error 404
+
+    return jsonify(planet.serialize()), 200  # Devuelve la información del planeta en formato JSON con código 200
+
+@app.route('/planets', methods=['POST'])
+def create_planet():
+    body = request.get_json()  # Obtener los datos del cuerpo de la solicitud
+    if not body:
+        return jsonify({"msg": "Body is required"}), 400  # Verifica si el cuerpo de la solicitud está vacío
+
+    # Validar que los campos requeridos estén presentes
+    required_fields = ['name', 'climate', 'terrain', 'population']
+    for field in required_fields:
+        if field not in body:
+            return jsonify({'msg': f'Missing {field}'}), 400
+
+    # Crear un nuevo registro de Planet
+    new_planet = Planet(
+        name=body['name'],
+        climate=body['climate'],
+        terrain=body['terrain'],
+        population=body['population']
+    )
+
+    # Guardar en la base de datos
+    db.session.add(new_planet)
+    db.session.commit()
+
+    return jsonify(new_planet.serialize()), 201  # Devuelve el objeto creado con código 201
+
+@app.route('/planets/<int:planet_id>', methods=['PUT'])
+def update_planet(planet_id):
+    planet = Planet.query.get(planet_id)  # Busca un planeta por ID en la base de datos
+    if planet is None:
+        return jsonify({'msg': 'Planet not found'}), 404
+
+    body = request.get_json()  # Obtener los datos del cuerpo de la solicitud
+    if not body:
+        return jsonify({"msg": "Body is required"}), 400
+
+    # Actualizar los campos permitidos si están presentes en el cuerpo de la solicitud
+    if "name" in body:
+        planet.name = body["name"]
+    if "climate" in body:
+        planet.climate = body["climate"]
+    if "terrain" in body:
+        planet.terrain = body["terrain"]
+    if "population" in body:
+        planet.population = body["population"]
+
+    db.session.commit()  # Guardar los cambios en la base de datos
+
+    return jsonify(planet.serialize()), 200
+
+@app.route('/planets/<int:planet_id>', methods=['DELETE'])
+def delete_planet(planet_id):
+    planet = Planet.query.get(planet_id)  # Busca un planeta por ID en la base de datos
+    if planet is None:
+        return jsonify({'msg': 'Planet not found'}), 404
+
+    db.session.delete(planet)  # Eliminar el planeta de la base de datos
+    db.session.commit()
+
+    return jsonify({"msg": "Planet deleted successfully"}), 200
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
