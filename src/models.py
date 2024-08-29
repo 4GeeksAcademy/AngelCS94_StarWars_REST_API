@@ -59,3 +59,42 @@ class Planet(db.Model):
             "terrain": self.terrain,
             "population": self.population
         }
+
+class FavoritePeople(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    people_id = db.Column(db.Integer, db.ForeignKey('people.id'), nullable=False)
+
+    user = db.relationship('User', backref=db.backref('favorite_people', lazy=True))
+    people = db.relationship('People')
+
+    def __repr__(self):
+        return f'<FavoritePeople user_id={self.user_id} people_id={self.people_id}>'
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "people_id": self.people_id,
+            "people": self.people.serialize()
+        }
+
+
+class FavoritePlanet(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    planet_id = db.Column(db.Integer, db.ForeignKey('planet.id'), nullable=False)
+
+    user = db.relationship('User', backref=db.backref('favorite_planets', lazy=True))
+    planet = db.relationship('Planet')
+
+    def __repr__(self):
+        return f'<FavoritePlanet user_id={self.user_id} planet_id={self.planet_id}>'
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "planet_id": self.planet_id,
+            "planet": self.planet.serialize()
+        }
